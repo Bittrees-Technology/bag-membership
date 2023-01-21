@@ -1,12 +1,8 @@
-# openzeppelin-erc721-upgradeable
+# bag-membership
 
-![Solidity tests](https://github.com/briangershon/openzeppelin-erc721-upgradeable/actions/workflows/continuous-integration.yaml/badge.svg)
+![Solidity tests](https://github.com/briangershon/bag-membership/actions/workflows/continuous-integration.yaml/badge.svg)
 
-Develop, test and deploy an upgradeable NFT contract based on OpenZeppelin ERC721 Solidity framework and Hardhat development environment. Deploy to any EVM blockchain.
-
-Use as a starter template for new projects.
-
-Tested with Node v18 (LTS).
+Builder's Advocacy Group Membership Contract (based on ERC-1155)
 
 Includes:
 
