@@ -38,8 +38,19 @@ const config: HardhatUserConfig = {
         enabled: process.env.REPORT_GAS ? true : false,
     },
     watcher: {
-        compilation: {
-            tasks: ['test'],
+        test: {
+            tasks: [
+                {
+                    command: 'test',
+                    params: {
+                        testFiles: ['{path}'],
+                    },
+                },
+            ],
+            files: ['./test/**/*'],
+            verbose: true,
+            clearOnStart: true,
+            start: 'echo Running test task now...',
         },
     },
 };

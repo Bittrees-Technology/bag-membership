@@ -4,13 +4,13 @@ import hre from 'hardhat';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { Contract } from 'ethers';
 
-describe('MyNFTCollection', function () {
+describe('BAGMembers', function () {
     let contract: Contract;
     let owner: SignerWithAddress;
     let otherUser: SignerWithAddress;
 
     beforeEach(async function () {
-        const Contract = await hre.ethers.getContractFactory('MyNFTCollection');
+        const Contract = await hre.ethers.getContractFactory('BAGMembers');
 
         const [_owner, _otherUser] = await hre.ethers.getSigners();
         owner = _owner;
@@ -22,10 +22,10 @@ describe('MyNFTCollection', function () {
 
     describe('setters', function () {
         describe('owner', function () {
-            it('should successfully set and retrieve baseURI', async () => {
-                const newURI = 'ipfs://testuri';
-                await contract.setBaseURI(newURI);
-                await expect(await contract.baseURI()).to.equal(newURI);
+            it('should successfully set and retrieve URI', async () => {
+                const newURI = 'ipfs://testuri/{id}';
+                await contract.setURI(newURI);
+                await expect(await contract.uri(1)).to.equal(newURI);
             });
 
             it('should successfully set and retrieve MintPrice', async () => {
@@ -36,9 +36,9 @@ describe('MyNFTCollection', function () {
         });
 
         describe('non-owner', function () {
-            it('should not be able to setBaseURI', async () => {
+            it('should not be able to setURI', async () => {
                 await expect(
-                    contract.connect(otherUser).setBaseURI('ipfs://123/')
+                    contract.connect(otherUser).setURI('ipfs://123/')
                 ).to.be.revertedWith('Ownable: caller is not the owner');
             });
             it('should not be able to setMintPrice', async () => {
@@ -49,12 +49,6 @@ describe('MyNFTCollection', function () {
         });
 
         describe('emits', function () {
-            it('BaseURIUpdated event', async function () {
-                await contract.setBaseURI('ipfs://old');
-                await expect(contract.setBaseURI('ipfs://new'))
-                    .to.emit(contract, 'BaseURIUpdated')
-                    .withArgs('ipfs://old', 'ipfs://new');
-            });
             it('MintPriceUpdated event', async function () {
                 await contract.setMintPrice(5000);
                 await expect(contract.setMintPrice(8000))
@@ -64,27 +58,27 @@ describe('MyNFTCollection', function () {
         });
     });
 
-    describe('mint', function () {
+    describe('mintMembership', function () {
         it('should not mint if value is below the minimum mintPrice', async function () {
             await contract.setMintPrice(hre.ethers.utils.parseEther('10.0'));
             await expect(
-                contract.mintItem(otherUser.address, {
+                contract.mintMembership(otherUser.address, {
                     value: hre.ethers.utils.parseEther('9.0'),
                 })
             ).to.be.revertedWith('Not enough funds sent');
         });
 
         describe('upon successful mint (when value is equal to mintPrice)', function () {
-            it('should emit a LogTokenMinted', async function () {
+            it('should emit a MemberJoined', async function () {
                 await contract.setMintPrice(
                     hre.ethers.utils.parseEther('10.0')
                 );
                 await expect(
-                    contract.mintItem(otherUser.address, {
+                    contract.mintMembership(otherUser.address, {
                         value: hre.ethers.utils.parseEther('10.0'),
                     })
                 )
-                    .to.emit(contract, 'LogTokenMinted')
+                    .to.emit(contract, 'MemberJoined')
                     .withArgs(otherUser.address, 1);
             });
 
@@ -92,27 +86,68 @@ describe('MyNFTCollection', function () {
                 await contract.setMintPrice(
                     hre.ethers.utils.parseEther('10.0')
                 );
-                await contract.mintItem(otherUser.address, {
+
+                // other user should initially have balance of zero
+                await expect(
+                    await contract.balanceOf(otherUser.address, 1)
+                ).to.equal(0);
+
+                await contract.mintMembership(otherUser.address, {
                     value: hre.ethers.utils.parseEther('10.0'),
                 });
 
-                await expect(await contract.ownerOf(1)).to.equal(
-                    otherUser.address
-                );
+                await expect(
+                    await contract.balanceOf(otherUser.address, 1)
+                ).to.equal(1);
             });
 
-            it('non-owner should also be successful and emit a LogTokenMinted', async function () {
+            it('non-owner should also be successful and emit a MemberJoined', async function () {
                 await contract.setMintPrice(
                     hre.ethers.utils.parseEther('10.0')
                 );
                 await expect(
-                    contract.connect(otherUser).mintItem(otherUser.address, {
-                        value: hre.ethers.utils.parseEther('10.0'),
-                    })
+                    contract
+                        .connect(otherUser)
+                        .mintMembership(otherUser.address, {
+                            value: hre.ethers.utils.parseEther('10.0'),
+                        })
                 )
-                    .to.emit(contract, 'LogTokenMinted')
+                    .to.emit(contract, 'MemberJoined')
                     .withArgs(otherUser.address, 1);
             });
+        });
+    });
+
+    describe('withdrawal', () => {
+        it('should withdraw funds if owner', async () => {
+            await contract.setMintPrice(hre.ethers.utils.parseEther('22.0'));
+            await contract.mintMembership(otherUser.address, {
+                value: hre.ethers.utils.parseEther('22.0'),
+            });
+
+            const ownerBalance = await hre.ethers.provider.getBalance(
+                owner.address
+            );
+            const contractBalance = await hre.ethers.provider.getBalance(
+                contract.address
+            );
+
+            await contract.withdraw();
+
+            const ownerBalanceAfter = await hre.ethers.provider.getBalance(
+                owner.address
+            );
+
+            const contractBalanceAfter = await hre.ethers.provider.getBalance(
+                contract.address
+            );
+
+            expect(contractBalanceAfter.toString()).to.equal(
+                hre.ethers.BigNumber.from(0).toString()
+            );
+            // slightly greater-than due to gas fees
+            expect(ownerBalance.add(contractBalance).gt(ownerBalanceAfter)).to
+                .be.true;
         });
     });
 });
