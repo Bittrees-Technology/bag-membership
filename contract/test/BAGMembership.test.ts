@@ -39,12 +39,16 @@ describe('BAGMembership', function () {
             it('should not be able to setURI', async () => {
                 await expect(
                     contract.connect(otherUser).setURI('ipfs://123/')
-                ).to.be.revertedWith('Ownable: caller is not the owner');
+                ).to.be.revertedWith(
+                    'AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000'
+                );
             });
             it('should not be able to setMintPrice', async () => {
                 await expect(
                     contract.connect(otherUser).setMintPrice(1000000)
-                ).to.be.revertedWith('Ownable: caller is not the owner');
+                ).to.be.revertedWith(
+                    'AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000'
+                );
             });
         });
 
@@ -119,7 +123,7 @@ describe('BAGMembership', function () {
     });
 
     describe('withdrawal', () => {
-        it('should withdraw funds if owner', async () => {
+        it('should withdraw funds if DEFAULT_ADMIN_ROLE', async () => {
             await contract.setMintPrice(hre.ethers.utils.parseEther('22.0'));
             await contract.mintMembership(otherUser.address, {
                 value: hre.ethers.utils.parseEther('22.0'),
@@ -148,6 +152,19 @@ describe('BAGMembership', function () {
             // slightly greater-than due to gas fees
             expect(ownerBalance.add(contractBalance).gt(ownerBalanceAfter)).to
                 .be.true;
+        });
+
+        it('should not withdraw funds if not DEFAULT_ADMIN_ROLE', async () => {
+            await contract.setMintPrice(hre.ethers.utils.parseEther('22.0'));
+            await contract.mintMembership(otherUser.address, {
+                value: hre.ethers.utils.parseEther('22.0'),
+            });
+
+            await expect(
+                contract.connect(otherUser).withdraw()
+            ).to.be.revertedWith(
+                'AccessControl: account 0x70997970c51812dc3a010c7d01b50e0d17dc79c8 is missing role 0x0000000000000000000000000000000000000000000000000000000000000000'
+            );
         });
     });
 });

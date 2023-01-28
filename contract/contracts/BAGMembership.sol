@@ -2,11 +2,11 @@
 pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC1155/ERC1155Upgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
-contract BAGMembership is ERC1155Upgradeable, OwnableUpgradeable {
+contract BAGMembership is ERC1155Upgradeable, AccessControlUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     CountersUpgradeable.Counter private _tokenIds;
 
@@ -24,14 +24,27 @@ contract BAGMembership is ERC1155Upgradeable, OwnableUpgradeable {
         mintPrice = 0.01 ether;
 
         __ERC1155_init("ipfs://xxx/{id}");
-        __Ownable_init();
+        __AccessControl_init();
+
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
-    function setURI(string memory newuri) public onlyOwner {
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        override(ERC1155Upgradeable, AccessControlUpgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+
+    function setURI(string memory newuri) public onlyRole(DEFAULT_ADMIN_ROLE) {
         _setURI(newuri);
     }
 
-    function setMintPrice(uint256 _newPrice) external onlyOwner {
+    function setMintPrice(uint256 _newPrice) external onlyRole(DEFAULT_ADMIN_ROLE) {
         // Mint price in wei
         emit MintPriceUpdated(mintPrice, _newPrice);
         mintPrice = _newPrice;
@@ -49,7 +62,7 @@ contract BAGMembership is ERC1155Upgradeable, OwnableUpgradeable {
         return newItemId;
     }
 
-    function withdraw() external onlyOwner {
+    function withdraw() external onlyRole(DEFAULT_ADMIN_ROLE) {
         uint256 _balance = address(this).balance;
         (bool success, ) = payable(msg.sender).call{value: _balance}("");
         require(success, "Unable to withdraw");
