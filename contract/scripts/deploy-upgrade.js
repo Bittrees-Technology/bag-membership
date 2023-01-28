@@ -18,7 +18,7 @@ async function main() {
 
     console.log('Deployer wallet public key:', deployer.address);
 
-    const Contract = await ethers.getContractFactory('BAGMembers');
+    const Contract = await ethers.getContractFactory('BAGMembership');
     const proxyContract = await upgrades.upgradeProxy(
         upgradeableProxyAddress,
         Contract
