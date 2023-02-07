@@ -25,7 +25,7 @@ contract BAGMembership is ERC1155Upgradeable, AccessControlUpgradeable {
         mintPrice = 0.01 ether;
         expirationTimeframe = 52 weeks;
 
-        __ERC1155_init("ipfs://xxx/{id}");
+        __ERC1155_init("ipfs://QmXMsaYXedBE5BDXwXfNNWgoo36ZkY3XoNqecGFU97RZQh/1");
         __AccessControl_init();
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
