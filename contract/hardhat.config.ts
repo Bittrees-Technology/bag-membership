@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from 'hardhat/config';
 import '@nomicfoundation/hardhat-toolbox';
 import '@openzeppelin/hardhat-upgrades';
+import '@openzeppelin/hardhat-defender';
 import 'hardhat-watcher';
 
 import dotenv from 'dotenv';
@@ -20,6 +21,10 @@ const config: HardhatUserConfig = {
                 runs: 1000,
             },
         },
+    },
+    defender: {
+        apiKey: process.env.DEFENDER_TEAM_API_KEY || '',
+        apiSecret: process.env.DEFENDER_TEAM_API_SECRET_KEY || '',
     },
     networks: {
         testnet: {

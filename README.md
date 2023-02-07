@@ -76,6 +76,23 @@ If you upgrade contract without making any changes, the system will continue to 
     -   you can interact with on Etherscan or Polygonscan
 -   **IMPORTANT** You'll notice changed files in `.openzeppelin` folder. It's important you keep these files and check them into the repository. They are required for upgrading the contract.
 
+## Upgrading Contract with OpenZeppelin Defender
+
+First, set transfer ProxyAdmin to Gnosis Safe -- update `scripts/transfer-ownership.js` with Safe address.
+
+    npx hardhat run --network testnet scripts/transfer-ownership.js
+
+Second, propose upgrade:
+
+    npx hardhat run --network testnet scripts/propose-upgrade.js
+
+This will create the new implementation contract (under the deployer wallet), which you can verify:
+
+    # for example:
+    npx hardhat verify --network testnet 0xB715b1824fd05044F773a9f72E44d3ca0c123461
+
+Lastly, go into Defender and approve upgrade.
+
 ### Deploy to Mainnet
 
 If you're happy with everything after testing locally and on testnet, it's time to deploy to production on Mainnet.
