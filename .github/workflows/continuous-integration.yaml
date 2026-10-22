@@ -14,5 +14,9 @@ jobs:
             - run: node --version
             - run: npm install
               working-directory: contract
+            - name: Record generated dependency lockfile for review
+              run: |
+                  git -c color.ui=false diff --no-ext-diff -- contract/package-lock.json
+                  sha256sum contract/package-lock.json
             - run: npm run test:ci
               working-directory: contract
